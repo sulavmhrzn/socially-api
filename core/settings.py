@@ -40,9 +40,10 @@ INSTALLED_APPS = [
     "rest_framework",
     "debug_toolbar",
     "taggit",
+    "django_filters",
     "post",
     "account",
-    "django_filters",
+    "comment",
 ]
 
 MIDDLEWARE = [

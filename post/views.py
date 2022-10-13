@@ -1,3 +1,10 @@
+from comment.models import Comment
+from comment.serializers import (
+    CommentCreateSerializer,
+    CommentDetailSerializer,
+    CommentSerializer,
+)
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework.backends import DjangoFilterBackend
 from rest_framework import status
@@ -6,14 +13,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .filters import PostFilterSet
-from .models import Comment, Post
-from .serializers import (
-    CommentCreateSerializer,
-    CommentDetailSerializer,
-    CommentSerializer,
-    PostCreateSerializer,
-    PostListSerializer,
-)
+from .models import Post
+from .serializers import PostCreateSerializer, PostListSerializer
 
 
 class PostListCreateAPIView(APIView):
@@ -30,7 +31,7 @@ class PostListCreateAPIView(APIView):
         qs = (
             Post.objects.select_related("author")
             .prefetch_related("tags")
-            .prefetch_related("comment_set")
+            .prefetch_related("comment")
             .filter(is_published=True)
             .all()
         )
@@ -51,7 +52,13 @@ class PostRetrieveUpdateDeleteAPIView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request, id=None):
-        post = get_object_or_404(Post, id=id, is_published=True)
+        post = get_object_or_404(
+            Post.objects.select_related("author")
+            .prefetch_related("comment")
+            .prefetch_related("tags"),
+            id=id,
+            is_published=True,
+        )
         serializer = PostListSerializer(instance=post)
         return Response(data=serializer.data)
 
@@ -75,32 +82,45 @@ class PostRetrieveUpdateDeleteAPIView(APIView):
 
 class CommentListCreateAPIView(APIView):
     def get(self, request, post_id):
-        comments = Comment.objects.select_related("user").filter(
-            post=post_id, post__is_published=True
+        post = get_object_or_404(
+            Post.objects.select_related("author"), is_published=True, id=post_id
         )
+        comments = post.comment.all()
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data)
 
     def post(self, request, post_id):
-        post = get_object_or_404(
+        get_object_or_404(
             Post,
             id=post_id,
             is_published=True,
         )
-        serializer = CommentCreateSerializer(data=request.data)
+        serializer = CommentCreateSerializer(
+            data=request.data, context={"post_id": post_id, "user": self.request.user}
+        )
         serializer.is_valid()
-        serializer.save(user=request.user, post=post)
-        return Response(status=status.HTTP_201_CREATED)
+        serializer.save()
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
 
 class CommentRetrieveUpdateDeleteAPIView(APIView):
     def get(self, request, post_id, comment_id):
-        comment_qs = Comment.objects.select_related("user").select_related("post")
-        comment = get_object_or_404(comment_qs, post=post_id, id=comment_id)
+        # comment_qs = Comment.objects.select_related("user").select_related("post")
+        post = get_object_or_404(
+            Post.objects.select_related("author"),
+            id=post_id,
+        )
+        comment_qs = post.comment.select_related("user").all()
+
+        comment = get_object_or_404(comment_qs, object_id=post_id, id=comment_id)
         serializer = CommentDetailSerializer(comment, context={"request": request})
         return Response(serializer.data)
 
     def put(self, request, post_id, comment_id):
+        get_object_or_404(
+            Post.objects.select_related("author"),
+            id=post_id,
+        )
         comment = get_object_or_404(Comment, id=comment_id, user=request.user)
         serializer = CommentCreateSerializer(instance=comment, data=request.data)
         serializer.is_valid(raise_exception=True)

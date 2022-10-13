@@ -1,9 +1,6 @@
+from comment.serializers import CommentDetailSerializer
 from django.contrib.auth.models import User
-from post.serializers import (
-    CommentDetailSerializer,
-    PostDetailSerializer,
-    PostListSerializer,
-)
+from post.serializers import PostDetailSerializer, PostListSerializer
 from rest_framework import serializers
 
 

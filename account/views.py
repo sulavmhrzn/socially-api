@@ -1,4 +1,5 @@
-from post.models import Comment, Post
+from comment.models import Comment
+from post.models import Post
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,16 +15,12 @@ class DashboardAPIView(APIView):
         posts = (
             Post.objects.select_related("author")
             .prefetch_related("tags")
-            .prefetch_related("comment_set")
+            .prefetch_related("comment")
             .filter(author=user)
             .all()
         )
-        comments = (
-            Comment.objects.select_related("user")
-            .select_related("post")
-            .filter(user=user)
-            .all()
-        )
+        comments = Comment.objects.select_related("user").filter(user=user).all()
+
         serializer = DashboardSerializer(
             user,
             context={

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from taggit.serializers import TaggitSerializer, TagListSerializerField
 
-from .models import Comment, Post
+from .models import Post
 
 
 class PostCreateSerializer(TaggitSerializer, serializers.ModelSerializer):
@@ -18,7 +18,7 @@ class PostListSerializer(serializers.ModelSerializer):
     comment_count = serializers.SerializerMethodField()
 
     def get_comment_count(self, obj):
-        return obj.comment_set.count()
+        return obj.comment.count()
 
     class Meta:
         model = Post
@@ -43,7 +43,7 @@ class PostDetailSerializer(serializers.HyperlinkedModelSerializer):
     )
 
     def get_comment_count(self, obj):
-        return obj.comment_set.count()
+        return obj.comment.count()
 
     class Meta:
         model = Post
@@ -60,27 +60,3 @@ class PostDetailSerializer(serializers.HyperlinkedModelSerializer):
         ]
 
 
-class CommentCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = ["content"]
-
-
-class CommentSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField()
-
-    class Meta:
-        model = Comment
-        fields = ["id", "content", "user", "created_at", "updated_at"]
-
-
-class CommentDetailSerializer(serializers.HyperlinkedModelSerializer):
-
-    user = serializers.StringRelatedField()
-    post = serializers.HyperlinkedRelatedField(
-        view_name="post_retrieve_update_delete", read_only=True, lookup_field="id"
-    )
-
-    class Meta:
-        model = Comment
-        fields = ["id", "content", "user", "post", "created_at", "updated_at"]
