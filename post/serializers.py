@@ -16,9 +16,13 @@ class PostListSerializer(serializers.ModelSerializer):
     author = serializers.StringRelatedField()
     tags = TagListSerializerField()
     comment_count = serializers.SerializerMethodField()
+    like_count = serializers.SerializerMethodField()
 
     def get_comment_count(self, obj):
         return obj.comment.count()
+
+    def get_like_count(self, obj):
+        return obj.like.count()
 
     class Meta:
         model = Post
@@ -29,6 +33,7 @@ class PostListSerializer(serializers.ModelSerializer):
             "tags",
             "author",
             "comment_count",
+            "like_count",
             "created_at",
             "updated_at",
         ]
@@ -38,12 +43,16 @@ class PostDetailSerializer(serializers.HyperlinkedModelSerializer):
     author = serializers.StringRelatedField()
     tags = TagListSerializerField()
     comment_count = serializers.SerializerMethodField()
+    like_count = serializers.SerializerMethodField()
     url = serializers.HyperlinkedIdentityField(
         view_name="post_retrieve_update_delete", lookup_field="id", read_only=True
     )
 
     def get_comment_count(self, obj):
         return obj.comment.count()
+
+    def get_like_count(self, obj):
+        return obj.like.count()
 
     class Meta:
         model = Post
@@ -55,8 +64,7 @@ class PostDetailSerializer(serializers.HyperlinkedModelSerializer):
             "tags",
             "author",
             "comment_count",
+            "like_count",
             "created_at",
             "updated_at",
         ]
-
-

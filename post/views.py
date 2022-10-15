@@ -4,11 +4,13 @@ from comment.serializers import (
     CommentDetailSerializer,
     CommentSerializer,
 )
+from django.contrib.contenttypes.models import ContentType
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework.backends import DjangoFilterBackend
+from like.models import Like
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -32,6 +34,7 @@ class PostListCreateAPIView(APIView):
             Post.objects.select_related("author")
             .prefetch_related("tags")
             .prefetch_related("comment")
+            .prefetch_related("like")
             .filter(is_published=True)
             .all()
         )
@@ -131,3 +134,16 @@ class CommentRetrieveUpdateDeleteAPIView(APIView):
         comment = get_object_or_404(Comment, id=comment_id, user=request.user)
         comment.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class LikePostAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, post_id):
+        post = get_object_or_404(Post, id=post_id, is_published=True)
+        user = self.request.user
+        if post.like.filter(user=user):
+            Like.objects.get(user=user).delete()
+            return Response({"message": "Like removed"})
+        post.like.create(user=user)
+        return Response({"message": "Like added"})

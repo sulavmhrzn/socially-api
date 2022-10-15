@@ -16,6 +16,7 @@ class DashboardAPIView(APIView):
             Post.objects.select_related("author")
             .prefetch_related("tags")
             .prefetch_related("comment")
+            .prefetch_related("like")
             .filter(author=user)
             .all()
         )

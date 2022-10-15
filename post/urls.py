@@ -19,4 +19,5 @@ urlpatterns = [
         views.CommentRetrieveUpdateDeleteAPIView.as_view(),
         name="comment_retrieve_update_delete",
     ),
+    path("<int:post_id>/like", views.LikePostAPIView.as_view(), name="like_post"),
 ]

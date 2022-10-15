@@ -1,8 +1,8 @@
 from comment.models import Comment
 from django.contrib.auth.models import User
-from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
-from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
+from like.models import Like
 from taggit.managers import TaggableManager
 
 
@@ -15,6 +15,7 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     comment = GenericRelation(Comment)
+    like = GenericRelation(Like)
 
     def __str__(self) -> str:
         return self.title
