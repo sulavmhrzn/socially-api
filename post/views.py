@@ -84,6 +84,8 @@ class PostRetrieveUpdateDeleteAPIView(APIView):
 
 
 class CommentListCreateAPIView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request, post_id):
         post = get_object_or_404(
             Post.objects.select_related("author"), is_published=True, id=post_id
@@ -107,6 +109,8 @@ class CommentListCreateAPIView(APIView):
 
 
 class CommentRetrieveUpdateDeleteAPIView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request, post_id, comment_id):
         # comment_qs = Comment.objects.select_related("user").select_related("post")
         post = get_object_or_404(

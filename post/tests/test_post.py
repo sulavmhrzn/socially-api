@@ -1,11 +1,8 @@
-import json
-
 from django.contrib.auth.models import User
 from django.urls import reverse
+from post.models import Post
 from rest_framework import status
 from rest_framework.test import APITestCase
-
-from .models import Post
 
 
 class TestPostCreate(APITestCase):
