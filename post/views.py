@@ -148,6 +148,6 @@ class LikePostAPIView(APIView):
         user = self.request.user
         if post.like.filter(user=user):
             Like.objects.get(user=user).delete()
-            return Response({"message": "Like removed"})
+            return Response({"message": "Like removed"}, status=status.HTTP_201_CREATED)
         post.like.create(user=user)
-        return Response({"message": "Like added"})
+        return Response({"message": "Like added"}, status=status.HTTP_201_CREATED)
