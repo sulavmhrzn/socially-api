@@ -4,7 +4,7 @@ from comment.serializers import (
     CommentDetailSerializer,
     CommentSerializer,
 )
-from django.contrib.contenttypes.models import ContentType
+from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework.backends import DjangoFilterBackend
@@ -13,6 +13,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from tasks import send_email
 
 from .filters import PostFilterSet
 from .models import Post
@@ -48,6 +49,12 @@ class PostListCreateAPIView(APIView):
         serializer = PostCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(author=request.user)
+        send_email.delay(
+            subject="Post created",
+            message="You created a post",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to_email=request.user.email,
+        )
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
 
