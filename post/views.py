@@ -17,6 +17,7 @@ from tasks import send_email
 
 from .filters import PostFilterSet
 from .models import Post
+from .paginations import DefaultPageNumberPagination
 from .serializers import PostCreateSerializer, PostListSerializer
 
 
@@ -24,6 +25,27 @@ class PostListCreateAPIView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ("title", "author__username", "tags__name")
+    pagination_class = DefaultPageNumberPagination
+
+    @property
+    def paginator(self):
+        if not hasattr(self, "_paginator"):
+            if self.pagination_class is None:
+                self._paginator = None
+            else:
+                self._paginator = self.pagination_class()
+        return self._paginator
+
+    def paginate_queryset(self, queryset):
+        if self.paginator is None:
+            return None
+        return self.paginator.paginate_queryset(
+            queryset=queryset, request=self.request, view=self
+        )
+
+    def get_paginated_response(self, data):
+        assert self.paginator is not None
+        return self.paginator.get_paginated_response(data=data)
 
     def filter_queryset(self, queryset):
         for backend in list(self.filter_backends):
@@ -40,10 +62,11 @@ class PostListCreateAPIView(APIView):
             .all()
         )
         posts = self.filter_queryset(qs)
+        page = self.paginate_queryset(posts)
         serializer = PostListSerializer(
-            instance=posts, many=True, context={"request": request}
+            instance=page, many=True, context={"request": request}
         )
-        return Response(data=serializer.data)
+        return self.get_paginated_response(serializer.data)
 
     def post(self, request):
         serializer = PostCreateSerializer(data=request.data)
